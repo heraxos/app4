@@ -1,103 +1,127 @@
-<?php
-header('Content-Type: text/html; charset=UTF-8');
-if ($_SERVER['REQUEST_METHOD'] == 'GET'){
-	if (!empty($_GET['save'])) {
-    	// Если есть параметр save, то выводим сообщение пользователю.
-   	 print('Спасибо, результаты сохранены.');
-  	}
-	include('form.php');
-  	// Завершаем работу скрипта.
-  	exit();
-}
-$errors = FALSE;
-if(empty($_POST['field-name-1']) || !isset($_POST['field-name-4']) || empty($_POST['field-email']) || empty($_POST['field-date']) || empty($_POST['bio-field']) || empty($_POST['checkbox']) || $_POST['checkbox'] == false){
-	print_r('Empty fields!');
-	exit();
-}
-if(!is_numeric($_POST['radio-group-2'])){
-	print_r('Limb field is non-numeric');
-}
-print_r("Non null data... <br/>");
-$name = $_POST['field-name-1'];
-$email = $_POST['field-email'];
-$birth = $_POST['field-date'];
-$sex = $_POST['radio-group-1'];
-$limbs = intval($_POST['radio-group-2']);
-$superpowers = $_POST['field-name-4'];
-$bio= $_POST['bio-field'];
-$bioregex = "/^\s*\w+[\w\s\.,-]*$/";
-$regex = "/^\w+[\w\s-]*$/";
-$dateregex = "/^\d{4}-\d{2}-\d{2}$/";
-$mailregex = "/^[\w\.-]+@([\w-]+\.)+[\w-]{2,4}$/";
-$super_list = array('immortality','walkthroughwalls','levitation');
-if(!preg_match($regex,$name)){
-	print_r('Invalid name format');
-	exit();
-}
-if($limbs < 1 || $limbs > 5){
-	print_r('Invalid am of limbs');
-	exit();
-}
-if(!preg_match($dateregex,$birth)){
-	print_r('Invalid birth format');
-	exit();
-}
-preg_match_all("/\d+/",$birth,$matches);
-if (!checkdate($matches[0][1],$matches[0][2],$matches[0][0])){
-	print_r('Date does not exist');
-	exit();
-}
-if(!preg_match($bioregex,$bio)){
-	print_r('Invalid bio format');
-	exit();
-}
-if(!preg_match($mailregex,$email)){
-	print_r('Invalid email format');
-	exit();
-}
-if($sex !== 'male' && $sex !== 'female'){
-	print_r('Invalid sex format');
-	exit();
-}
-foreach($superpowers as $checking){
-	if(array_search($checking,$super_list)=== false){
-			print_r('Invalid superpower value!');
-			exit();
-	}
-}
-$user = 'u47755';
-$pass = '2914865';
-$db = new PDO('mysql:host=localhost;dbname=u47755', $user, $pass, array(PDO::ATTR_PERSISTENT => true));
-try {
-  $stmt = $db->prepare("INSERT INTO table1 SET name=:name, email=:email, birthdate=:birthdate, sex=:sex, limb_count=:limbs, bio=:bio");
-  $stmt->bindParam(':name', $name);
-  $stmt->bindParam(':email', $email);
-  $stmt->bindParam(':birthdate', $birth);
-  $stmt->bindParam(':sex', $sex);
-  $stmt->bindParam(':limbs', $limbs);
-  $stmt->bindParam(':bio', $bio);
-  if($stmt->execute()==false){
-  print_r($stmt->errorCode());
-  print_r($stmt->errorInfo());
-  exit();
-  }
-  $id = $db->lastInsertId();
-  $sppe= $db->prepare("INSERT INTO superpowers SET name=:name, person_id=:person");
-  $stmt->bindParam(':email', $email);
-  $sppe->bindParam(':person', $id);
-  foreach($superpowers as $inserting){
-	$sppe->bindParam(':name', $inserting);
-	if($sppe->execute()==false){
-	  print_r($sppe->errorCode());
-	  print_r($sppe->errorInfo());
-	  exit();
-	}
-  }
-} 
-catch(PDOException $e){
-  print('Error : ' . $e->getMessage());
-  exit();
-}
+<?php 
+	header('Content-Type: text/html; charset=UTF-8');
 
-print_r("Succesfully added new stuff, probably...");
+	if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+    $messages = array();
+    if (!empty($_COOKIE['save'])) {
+      setcookie('save', '', 100000);
+      $messages[] = 'Спасибо, результаты сохранены.';
+    }
+    $errors = array();
+    $errors['uName'] = !empty($_COOKIE['uName_error']);
+  	$errors['uMail'] = !empty($_COOKIE['uMail_error']);
+  	$errors['uDate'] = !empty($_COOKIE['uDate_error']);
+    $errors['uGen'] = !empty($_COOKIE['uGen_error']);
+    $errors['uLim'] = !empty($_COOKIE['uLim_error']);
+    $errors['uBio'] = !empty($_COOKIE['uBio_error']);
+
+    if ($errors['uName']) {
+      setcookie('uName_error', '', 100000);
+      $messages[] = '<div class="error">Заполните имя.</div>';
+    }
+	  if ($errors['uMail']) {
+      setcookie('uMail_error', '', 100000);
+      $messages[] = '<div class="error">Заполните e-mail.</div>';
+    }
+	  if ($errors['uDate']) {
+      setcookie('uDate_error', '', 100000);
+      $messages[] = '<div class="error">Заполните дату рождения.</div>';
+    }
+    if ($errors['uGen']) {
+      setcookie('uGen_error', '', 100000);
+      $messages[] = '<div class="error">Заполните Пол.</div>';
+    }
+    if ($errors['uLim']) {
+      setcookie('uLim_error', '', 100000);
+      $messages[] = '<div class="error">Заполните конечности.</div>';
+    }
+	  if ($errors['uBio']) {
+      setcookie('uBio_error', '', 100000);
+      $messages[] = '<div class="error">Заполните биографию.</div>';
+    }
+    print($messages);
+
+    $values = array();
+    $values['uName'] = empty($_COOKIE['uName_value']) ? '' : $_COOKIE['uName_value'];
+	  $values['uMail'] = empty($_COOKIE['uMail_value']) ? '' : $_COOKIE['uMail_value'];
+	  $values['uDate'] = empty($_COOKIE['uDate_value']) ? '' : $_COOKIE['uDate_value'];
+    $values['uGen'] = empty($_COOKIE['uGen_value']) ? '' : $_COOKIE['uGen_value'];
+    $values['uLim'] = empty($_COOKIE['uLim_value']) ? '' : $_COOKIE['uLim_value'];
+	  $values['uBio'] = empty($_COOKIE['uBio_value']) ? '' : $_COOKIE['uBio_value'];
+
+    include('form.php');
+} else {
+  
+	$errors = false;
+  if (empty($_POST['uName'])) {
+    setcookie('uName_error', '1',time() + 30 * 24 * 60 * 60);
+    $errors = TRUE;
+  }
+  if (empty($_POST['uMail'])) {
+    setcookie('uMail_error', '1',time() + 30 * 24 * 60 * 60);
+    $errors = TRUE;
+  }
+  if (empty($_POST['uDate'])) {
+    setcookie('uDate_error', '1',time() + 30 * 24 * 60 * 60);
+    $errors = TRUE;
+  }
+  if (empty($_POST['uGen'])) {
+    setcookie('uGen_error', '1',time() + 30 * 24 * 60 * 60);
+    $errors = TRUE;
+  }
+  if (empty($_POST['uLim'])) {
+    setcookie('uLim_error', '1',time() + 30 * 24 * 60 * 60);
+    $errors = TRUE;
+  }
+  if (empty($_POST['uBio'])) {
+    setcookie('uBio_error', '1',time() + 30 * 24 * 60 * 60);
+    $errors = TRUE;
+  }
+	if ($errors) {
+    setcookie('uName_value', '', 100000);
+		setcookie('uMail_value', '', 100000);
+		setcookie('uDate_value', '', 100000);
+    setcookie('uGen_value', '', 100000);
+    setcookie('uLim_value', '', 100000);
+		setcookie('uBio_value', '', 100000);
+    header('Location: index.php');
+    exit();
+  }else {
+    setcookie('uName_value', $_POST['uName'], time() + 30 * 24 * 60 * 60);
+    setcookie('uMail_value', $_POST['uMail'], time() + 30 * 24 * 60 * 60);
+    setcookie('uDate_value', $_POST['uDate'], time() + 30 * 24 * 60 * 60);
+    setcookie('uGen_value', $_POST['uGen'], time() + 30 * 24 * 60 * 60);
+    setcookie('uLim_value', $_POST['uLim'], time() + 30 * 24 * 60 * 60);
+    setcookie('uBio_value', $_POST['uBio'], time() + 30 * 24 * 60 * 60);
+	}
+	try {
+        $uName = $_POST['uName'];
+        $uMail = $_POST['uMail'];
+        $uDate = $_POST['uDate'];
+        $uGen = $_POST['uGen'];
+        $uLim = $_POST['uLim'];
+        $uBio = $_POST['uBio'];
+        $user = 'u47755';
+        $pass = '2914865';
+        $db = new PDO('mysql:host=localhost;dbname=u47755', $user, $pass, array(PDO::ATTR_PERSISTENT => true));
+        $stmt = $db->prepare("INSERT INTO table1 (Name, Email, Birthdate, Gender,Limbs, Bio) VALUES (:name, :email, :date, :gen, :lim,  :bio)");
+        $stmt->bindParam(':name', $uName);
+        $stmt->bindParam(':email', $uMail);
+        $stmt->bindParam(':date', $uDate);
+        $stmt->bindParam(':gen', $uGen);
+        $stmt->bindParam(':lim', $uLim);
+        $stmt->bindParam(':bio', $uBio);
+        if($stmt->execute()==false){
+          print_r($stmt->errorCode());
+          print_r($stmt->errorInfo());
+          exit();
+        }
+    } catch (PDOException $e) {
+        print('Error : ' . $e->getMessage());
+        exit();
+    }
+	setcookie('save', '1');
+  header('Location: index.php');
+  print_r("Added");
+}
 ?>
