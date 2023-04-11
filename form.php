@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="Style.css">
     <style>
       .error {
-        border: 5px solid black;
+        border: 5px solid red;
         background-color: red;
         color: white;
         border-radius: 7px;
@@ -35,7 +35,7 @@
       .form_class {
 	      border: 3px solid black;
 	      border-radius: 5px;
-	      background-color: yellowgreen;
+	      background-color: aqua;
       }
     </style>
     <div class="form_class">
