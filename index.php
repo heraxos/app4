@@ -104,7 +104,7 @@
         $user = 'u47755';
         $pass = '2914865';
         $db = new PDO('mysql:host=localhost;dbname=u47755', $user, $pass, array(PDO::ATTR_PERSISTENT => true));
-        $stmt = $db->prepare("INSERT INTO web4 (Name, Email, Birthdate, Gender,Limbs, Bio) VALUES (:name, :email, :date, :gen, :lim,  :bio)");
+        $stmt = $db->prepare("INSERT INTO web4 (name, email, date, gen, lim, bio) VALUES (:name, :email, :date, :gen, :lim,  :bio)");
         $stmt->bindParam(':name', $uName);
         $stmt->bindParam(':email', $uMail);
         $stmt->bindParam(':date', $uDate);
